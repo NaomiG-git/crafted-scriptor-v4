@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crafted Scriptor</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- External libs (browser-safe CDNs) -->
+  <script defer src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script defer src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <script defer src="https://unpkg.com/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Optional DOCX -> HTML import (if user uploads .docx) -->
+  <script defer src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="brand">Crafted Scriptor</h1>
+    <div class="actions">
+      <div class="btn-group">
+        <button id="downloadBtn" class="btn primary">Download ▾</button>
+        <div id="downloadMenu" class="menu">
+          <button data-dl="docx">Download DOCX</button>
+          <button data-dl="pdf">Download PDF</button>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button id="uploadBtn" class="btn">Upload</button>
+        <input id="uploadInput" type="file" accept=".txt,.md,.html,.htm,.docx,.png,.jpg,.jpeg,.gif" hidden>
+      </div>
+      <button id="clearCanvasBtn" class="btn danger outline">Clear Canvas</button>
+      <button id="toggleThemeBtn" class="btn">Toggle Theme</button>
+      <button id="deleteProjectBtn" class="btn danger">Delete Project</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: Outline + Inspiration -->
+    <!-- ===== LEFT: V4 Sidebar (unchanged look) ===== -->
+<aside id="leftSidebar">
+  <!-- Project Details -->
+  <section class="card">
+    <h3 class="card-title">Project Details</h3>
+    <div class="field">
+      <label for="bookTitle">Book Title</label>
+      <input id="bookTitle" type="text" placeholder="Enter Your Book Title" />
+    </div>
+    <div class="field">
+      <label for="bookSubtitle">Subtitle (Optional)</label>
+      <input id="bookSubtitle" type="text" placeholder="Enter Your Subtitle" />
+    </div>
+  </section>
+
+  <!-- Project Outline (V4) -->
+  <section class="card">
+    <h3 class="card-title">Project Outline</h3>
+
+    <div id="outline" class="outline">
+      <!-- V4 defaults will be injected by script.js -->
+    </div>
+
+    <div class="outline-actions">
+      <input id="newSectionTitle" type="text" placeholder="New Section Name" />
+      <button id="addSectionBtn" class="btn btn-accent">+ Add Section</button>
+    </div>
+
+    <div class="row">
+      <button id="setBgBtn" class="btn">
+        <span class="icon">🖼</span> Set Background
+      </button>
+      <button id="clearBgBtn" class="btn btn-outline danger">✕ Clear Background</button>
+      <input id="bgInput" type="file" accept="image/*" hidden>
+    </div>
+  </section>
+
+  <!-- Inspiration Station (V4 look) -->
+  <section class="card">
+    <h3 class="card-title">Inspiration Station</h3>
+
+    <select id="nicheSelect" class="input">
+      <option value="">Select Niche...</option>
+      <!-- categories are injected by script.js -->
+    </select>
+
+    <div class="row">
+      <button id="getPromptBtn" class="btn btn-accent">Get a Prompt</button>
+      <button id="copyPromptBtn" class="btn btn-outline">Copy</button>
+    </div>
+
+    <div id="promptBox" class="promptbox">Choose a niche above to see prompts.</div>
+    <small id="promptNote" class="muted">Prompts are read from <code>prompt-library.txt</code>.</small>
+  </section>
+</aside>
+
+
+
+    <!-- CENTER: Canvas page -->
+    <section class="pagewrap">
+      <!-- Sticky toolbar -->
+      <div class="toolbar" id="toolbar">
+        <div class="row">
+          <button data-cmd="back" class="btn">← Back</button>
+          <button data-cmd="undo" class="btn">↺ Undo</button>
+          <button data-cmd="redo" class="btn">↻ Redo</button>
+
+          <select id="blockType" class="input small">
+            <option value="p">Paragraph</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+            <option value="quote">Quote Block</option>
+            <option value="div">Divider</option>
+          </select>
+
+          <button data-cmd="bold" class="btn">B</button>
+          <button data-cmd="italic" class="btn">I</button>
+          <button data-cmd="underline" class="btn">U</button>
+          <button data-cmd="strike" class="btn">S</button>
+
+          <input id="fontColor" type="color" value="#222222" class="colorpick"/>
+
+          <button data-align="left" class="btn">Left Align</button>
+          <button data-align="center" class="btn">Center Align</button>
+          <button data-align="right" class="btn">Right Align</button>
+
+          <button data-cmd="outdent" class="btn">Outdent</button>
+          <button data-cmd="indent" class="btn">Indent</button>
+
+          <button data-list="ul" class="btn">• Bullet List</button>
+          <button data-list="ol" class="btn">1. Numbered List</button>
+          <button data-list="check" class="btn">✓ Checklist</button>
+
+          <button id="insertLinkBtn" class="btn">🔗 Link</button>
+          <button id="uploadImageBtn" class="btn">🖼 Upload Image</button>
+          <input id="imageInput" type="file" accept="image/*" hidden>
+
+          <input id="searchInput" class="input small" placeholder="Search...">
+          <input id="replaceInput" class="input small" placeholder="Replace with...">
+          <select id="replaceScope" class="input small">
+            <option value="active">Active Section</option>
+            <option value="project">Entire Project</option>
+          </select>
+          <button id="replaceBtn" class="btn">Replace</button>
+          <button id="replaceAllBtn" class="btn outline">Replace All</button>
+
+          <select id="pageSize" class="input small">
+            <option value="a4" selected>A4 (210 × 297 mm)</option>
+            <option value="letter">Letter (8.5 × 11")</option>
+            <option value="legal">Legal (8.5 × 14")</option>
+            <option value="planner">Letter Landscape (Planner)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Page background layer (prints) -->
+      <div class="page" id="page">
+        <div class="page-bg" id="pageBg"></div>
+        <div id="canvas" class="canvas" contenteditable="true"></div>
+      </div>
+
+      <footer class="goalbar">
+        <label>Daily Goal:</label>
+        <input id="dailyGoal" type="number" value="500" min="50" step="50" />
+        <span id="wordCount">0 / 500</span>
+      </footer>
+    </section>
+  </main>
+
+  <!-- Nice modal (for link, image size, etc.) -->
+  <dialog id="modal" class="modal">
+    <form method="dialog">
+      <h3 id="modalTitle">Action</h3>
+      <div id="modalBody"></div>
+      <div class="row right">
+        <button value="cancel" class="btn outline">Cancel</button>
+        <button id="modalOk" value="ok" class="btn accent">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
